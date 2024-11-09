@@ -270,20 +270,30 @@ async function checkGold(data) {
             requestWood = await requestMarket("wood", woodDiff);
 
             if(requestWood.json.result == "success") {
-                await sleep(15 * 1000);
-                confirmWood = await confirmMarket(requestWood.json);
+                if(requestWood.json.offer.captcha_required == true) {
+                    clearInterval(watcherInterval);
+                    watcherInterval = null;
+                    isCheckingGold = false;
+                    isWatcherRunning = false;
 
-                if(confirmWood.json.result == "rate_changed") {
-                    await sleep(10 * 1000);
-                    rateChangedWood = await confirmMarket(confirmWood.json);
-
-                    if(rateChangedWood.json.result == "success") {
-                        logToConsoleList(`Sold ${confirmWood.json.offer.resource_amount} ${GameData.resource_names[confirmWood.json.offer.resource_type]} for ${confirmWood.json.offer.gold} ${GameData.currencies.gold.name}`)
+                    logToConsoleList("Aborted due to CAPTCHA requirement.");
+                    return;
+                } else {
+                    await sleep(15 * 1000);
+                    confirmWood = await confirmMarket(requestWood.json);
+    
+                    if(confirmWood.json.result == "rate_changed") {
+                        await sleep(10 * 1000);
+                        rateChangedWood = await confirmMarket(confirmWood.json);
+    
+                        if(rateChangedWood.json.result == "success") {
+                            logToConsoleList(`Sold ${confirmWood.json.offer.resource_amount} ${GameData.resource_names[confirmWood.json.offer.resource_type]} for ${confirmWood.json.offer.gold} ${GameData.currencies.gold.name}`)
+                        }
                     }
-                }
-
-                if(confirmWood.json.result == "success") {
-                    logToConsoleList(`Sold ${requestWood.json.offer.resource_amount} ${GameData.resource_names[requestWood.json.offer.resource_type]} for ${requestWood.json.offer.gold} ${GameData.currencies.gold.name}`)
+    
+                    if(confirmWood.json.result == "success") {
+                        logToConsoleList(`Sold ${requestWood.json.offer.resource_amount} ${GameData.resource_names[requestWood.json.offer.resource_type]} for ${requestWood.json.offer.gold} ${GameData.currencies.gold.name}`)
+                    }
                 }
             }
         }
